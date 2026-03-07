@@ -1,0 +1,65 @@
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\geometry{margin=1in}
+
+\title{CSC209 A3}
+\author{Varak Tanashian \and Ethan Brook}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\chapter{Project Overview}
+% 5.1 Project Overview
+This is just the template for now. It will be filled in with real details once the project is done.
+
+\chapter{Build Instructions}
+% 5.2 Build Instructions
+List exact commands to compile and run your project. Include any required input files or dependencies.
+
+\chapter{Architecture Diagram}
+% 5.3 Architecture Diagram
+Include a diagram showing all processes (or server/clients) and their connections. TEMPORARY PLACEHOLDER:
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{imgs/architecture-diagram}
+\caption{Overall project architecture.}
+\end{figure}
+
+\chapter{Communication Protocol}
+% 5.4 Communication Protocol
+For each message type, describe:
+\begin{itemize}
+    \item Sender and receiver
+    \item Encoding
+    \item Semantics / invariants
+    \item Error handling
+\end{itemize}
+
+\chapter{Concurrency Model}
+% 5.5 Concurrency Model
+Explain how your application handles concurrency:
+\begin{itemize}
+    \item Forking and process coordination (Category 1)
+    \item Select loops and fd sets (Category 2)
+    \item How blocking is avoided
+\end{itemize}
+
+\chapter{Error Handling and Robustness}
+% 5.6 Error Handling and Robustness
+Describe at least three runtime error scenarios and how your code handles each. Example:
+\begin{itemize}
+    \item Client disconnects mid-message
+    \item Writing to a closed pipe
+    \item Malformed command input
+\end{itemize}
+
+\chapter{Team Contributions}
+% 5.7 Team Contributions
+Briefly list each team member and their specific contributions.
+
+\end{document}

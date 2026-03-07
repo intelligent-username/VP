@@ -1,0 +1,23 @@
+# leftovers from rendering the report
+*.log
+*.aux
+*.toc
+*.out
+
+
+# Test videos: these should be deleted from the project entirely once we have 
+*.mp4
+!vids/bing.mp4
+!vids/ljoGs6KVGdPmZR79.mp4
+!vids/spb.mp4
+!vids/car.mp4
+!vids/nature.mp4
+
+
+# Scraps
+.build_count
+
+
+# Output
+vp
+*.o
