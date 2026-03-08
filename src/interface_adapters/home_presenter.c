@@ -62,8 +62,6 @@ static void on_search_changed(GtkEntry *entry, gpointer data) {
         int idx = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(card), "video-index"));
         const char *title = hp->library->entries[idx].title;
 
-        printf("query='%s' title='%s'\n", text, title);
-
         gboolean visible = (text[0] == '\0') || title_matches(title, text);
         // The above (with the title_matches), it is a if contains search (for example, "l" search makes "plane" come up cuz plane contains "l")
         // But if we want prefix search instead (like "l" only is the ones starting with l and so on), we can change the line to:
