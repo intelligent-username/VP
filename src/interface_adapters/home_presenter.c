@@ -29,6 +29,52 @@ static void apply_css(void) {
     g_object_unref(p);
 }
 
+/* ---- Thumbnail filtering based on search entry ---- */
+
+/* 
+ * Case-insensitive substring match for video titles.
+ * Converts both the title and the search query to lowercase,
+ * then uses strstr() to check if the query appears in the title.
+ * Used by the search bar to filter thumbnails.
+ */
+static gboolean title_matches(const char *title, const char *query) {
+    char t[256];
+    char q[256];
+
+    g_strlcpy(t, title, sizeof(t));
+    g_strlcpy(q, query, sizeof(q));
+
+    g_strdown(t);
+    g_strdown(q);
+
+    return strstr(t, q) != NULL;
+}
+
+static void on_search_changed(GtkEntry *entry, gpointer data) {
+    HomePresenter *hp = (HomePresenter *)data;
+    const char *text = gtk_entry_get_text(entry);
+
+    GList *children = gtk_container_get_children(GTK_CONTAINER(hp->flow_box));
+    for (GList *l = children; l; l = l->next) {
+        GtkWidget *flow_child = GTK_WIDGET(l->data);
+        GtkWidget *card = gtk_bin_get_child(GTK_BIN(flow_child));
+
+        int idx = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(card), "video-index"));
+        const char *title = hp->library->entries[idx].title;
+
+        printf("query='%s' title='%s'\n", text, title);
+
+        gboolean visible = (text[0] == '\0') || title_matches(title, text);
+        // The above (with the title_matches), it is a if contains search (for example, "l" search makes "plane" come up cuz plane contains "l")
+        // But if we want prefix search instead (like "l" only is the ones starting with l and so on), we can change the line to:
+        // gboolean visible = (text[0] == '\0') ||g_ascii_strncasecmp(title, text, strlen(text)) == 0;
+        // and ofc we delete the title_matches function since we won't need it anymore
+        
+        gtk_widget_set_visible(flow_child, visible);
+    }
+    g_list_free(children);
+}
+
 /* ---- Thumbnail → Pixbuf ---- */
 
 static GdkPixbuf *pixbuf_from_video(const char *path) {
@@ -93,6 +139,42 @@ static GtkWidget *build_card(HomePresenter *hp, int i, GdkPixbuf *pb) {
     return ebox;
 }
 
+/* ---- Create search bar and video flow box ---- */
+
+static GtkWidget *create_search_bar(HomePresenter *hp) {
+    GtkWidget *search = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(search), "Search videos...");
+    gtk_widget_set_hexpand(search, TRUE);
+    gtk_widget_set_margin_start(search, 16);
+    gtk_widget_set_margin_end(search, 16);
+
+    hp->search_entry = search;
+    g_signal_connect(search, "changed",
+                     G_CALLBACK(on_search_changed), hp);
+
+    return search;
+}
+
+static GtkWidget *create_video_flow_box(HomePresenter *hp) {
+    GtkWidget *flow = gtk_flow_box_new();
+    gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(flow), TRUE);
+    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(flow), 6);
+    gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(flow), GTK_SELECTION_NONE);
+    gtk_widget_set_margin_start(flow, 16);
+    gtk_widget_set_margin_end(flow, 16);
+
+    hp->flow_box = flow;
+
+    for (int i = 0; i < hp->library->count; i++) {
+        GdkPixbuf *pb = pixbuf_from_video(hp->library->entries[i].path);
+        GtkWidget *card = build_card(hp, i, pb);
+        g_object_set_data(G_OBJECT(card), "video-index", GINT_TO_POINTER(i));
+        gtk_flow_box_insert(GTK_FLOW_BOX(flow), card, -1);
+    }
+
+    return flow;
+}
+
 /* ---- Build home page ---- */
 
 static GtkWidget *build_home_page(HomePresenter *hp) {
@@ -100,26 +182,16 @@ static GtkWidget *build_home_page(HomePresenter *hp) {
     GtkWidget *vbox   = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     GtkWidget *hdr = gtk_label_new("ViewPort");
-    gtk_style_context_add_class(
-        gtk_widget_get_style_context(hdr), "header-label");
+    gtk_style_context_add_class(gtk_widget_get_style_context(hdr), "header-label");
     gtk_widget_set_halign(hdr, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), hdr, FALSE, FALSE, 0);
 
-    GtkWidget *flow = gtk_flow_box_new();
-    gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(flow), TRUE);
-    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(flow), 6);
-    gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(flow),
-                                    GTK_SELECTION_NONE);
-    gtk_widget_set_margin_start(flow, 16);
-    gtk_widget_set_margin_end(flow, 16);
+    GtkWidget *search = create_search_bar(hp);
+    gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 0);
 
-    for (int i = 0; i < hp->library->count; i++) {
-        GdkPixbuf *pb = pixbuf_from_video(hp->library->entries[i].path);
-        GtkWidget *card = build_card(hp, i, pb);
-        gtk_flow_box_insert(GTK_FLOW_BOX(flow), card, -1);
-    }
-
+    GtkWidget *flow = create_video_flow_box(hp);
     gtk_box_pack_start(GTK_BOX(vbox), flow, TRUE, TRUE, 0);
+
     gtk_container_add(GTK_CONTAINER(scroll), vbox);
     return scroll;
 }

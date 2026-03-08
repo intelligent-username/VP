@@ -16,8 +16,11 @@ typedef struct {
     GtkWidget      *stack;
     GtkWidget      *home_page;
 
+    GtkWidget *search_entry;     /* search bar at top       */
+    GtkWidget *flow_box;         /* reference to thumbnails */
+
     VideoPresenter  vp;         /* player page lives here   */
-    VideoLibrary   *library;    /* borrowed                  */
+    VideoLibrary   *library;    /* borrowed                 */
 
     char            selected_path[VE_PATH_MAX];
     int             has_selection;
