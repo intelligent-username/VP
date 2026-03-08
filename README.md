@@ -48,8 +48,6 @@ Current search works by filtering video titles in memory.
   - Title
   - Description
   - Transcript
-- Improve UI layout so results **do not stretch vertically** when there are few results
-- Optionally add ranking / relevance ordering
 
 ---
 

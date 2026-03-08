@@ -11,14 +11,47 @@
 /* ---- CSS ---- */
 
 static const char *CSS =
-    "window           { background-color: #0d1117; }\n"
-    ".header-label    { color: #e6edf3; font-size: 28px;"
-    "                   font-weight: bold; margin: 20px; }\n"
-    ".video-card      { background-color: #161b22; border-radius: 8px;"
-    "                   padding: 6px; margin: 8px; }\n"
-    ".video-card:hover{ background-color: #21262d; }\n"
-    ".video-title     { color: #c9d1d9; font-size: 13px;"
-    "                   margin-top: 6px; }\n";
+    "window { background-color: #0d1117; }\n"
+    ".header-label {\n"
+    "   color: #f0f6fc;\n"
+    "   font-size: 32px;\n"
+    "   font-weight: 700;\n"
+    "   margin: 24px 20px;\n"
+    "   letter-spacing: 1px;\n"
+    "}\n"
+    ".video-card {\n"
+    "   background: linear-gradient(145deg, #161b22, #1b222c);\n"
+    "   border-radius: 12px;\n"
+    "   padding: 8px;\n"
+    "   margin: 10px;\n"
+    "   box-shadow: 0 2px 5px rgba(0,0,0,0.4);\n"
+    "}\n"
+    ".video-card:hover {\n"
+    "   background: linear-gradient(145deg, #21262d, #2a333f);\n"
+    "   box-shadow: 0 6px 15px rgba(0,0,0,0.5);\n"
+    "}\n"
+    ".video-title {\n"
+    "   color: #c9d1d9;\n"
+    "   font-size: 14px;\n"
+    "   margin-top: 8px;\n"
+    "   font-weight: 500;\n"
+    "   letter-spacing: 0.5px;\n"
+    "}\n"
+    "entry {\n"
+    "   border-radius: 16px;\n"
+    "   padding: 6px 12px;\n"
+    "   font-size: 14px;\n"
+    "   background-color: #161b22;\n"
+    "   color: #c9d1d9;\n"
+    "   border: 1px solid #30363d;\n"
+    "}\n"
+    "entry:hover {\n"
+    "   border-color: #58a6ff;\n"
+    "}\n"
+    "entry:focus {\n"
+    "   border-color: #58a6ff;\n"
+    "   box-shadow: 0 0 6px rgba(88,166,255,0.6);\n"
+    "}\n";
 
 static void apply_css(void) {
     GtkCssProvider *p = gtk_css_provider_new();
@@ -44,8 +77,8 @@ static gboolean title_matches(const char *title, const char *query) {
     g_strlcpy(t, title, sizeof(t));
     g_strlcpy(q, query, sizeof(q));
 
-    g_strdown(t);
-    g_strdown(q);
+    g_ascii_strdown(t, -1);
+    g_ascii_strdown(q, -1);
 
     return strstr(t, q) != NULL;
 }
@@ -63,11 +96,6 @@ static void on_search_changed(GtkEntry *entry, gpointer data) {
         const char *title = hp->library->entries[idx].title;
 
         gboolean visible = (text[0] == '\0') || title_matches(title, text);
-        // The above (with the title_matches), it is a if contains search (for example, "l" search makes "plane" come up cuz plane contains "l")
-        // But if we want prefix search instead (like "l" only is the ones starting with l and so on), we can change the line to:
-        // gboolean visible = (text[0] == '\0') ||g_ascii_strncasecmp(title, text, strlen(text)) == 0;
-        // and ofc we delete the title_matches function since we won't need it anymore
-        
         gtk_widget_set_visible(flow_child, visible);
     }
     g_list_free(children);
@@ -155,8 +183,10 @@ static GtkWidget *create_search_bar(HomePresenter *hp) {
 
 static GtkWidget *create_video_flow_box(HomePresenter *hp) {
     GtkWidget *flow = gtk_flow_box_new();
-    gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(flow), TRUE);
+    gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(flow), FALSE);
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(flow), 6);
+    gtk_flow_box_set_row_spacing(GTK_FLOW_BOX(flow), 12);
+    gtk_flow_box_set_column_spacing(GTK_FLOW_BOX(flow), 12);
     gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(flow), GTK_SELECTION_NONE);
     gtk_widget_set_margin_start(flow, 16);
     gtk_widget_set_margin_end(flow, 16);
@@ -166,6 +196,7 @@ static GtkWidget *create_video_flow_box(HomePresenter *hp) {
     for (int i = 0; i < hp->library->count; i++) {
         GdkPixbuf *pb = pixbuf_from_video(hp->library->entries[i].path);
         GtkWidget *card = build_card(hp, i, pb);
+        gtk_widget_set_size_request(card, THUMB_WIDTH, 180);
         g_object_set_data(G_OBJECT(card), "video-index", GINT_TO_POINTER(i));
         gtk_flow_box_insert(GTK_FLOW_BOX(flow), card, -1);
     }
@@ -177,7 +208,11 @@ static GtkWidget *create_video_flow_box(HomePresenter *hp) {
 
 static GtkWidget *build_home_page(HomePresenter *hp) {
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    GtkWidget *vbox   = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scroll), 400);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     GtkWidget *hdr = gtk_label_new("ViewPort");
     gtk_style_context_add_class(gtk_widget_get_style_context(hdr), "header-label");
@@ -188,7 +223,7 @@ static GtkWidget *build_home_page(HomePresenter *hp) {
     gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 0);
 
     GtkWidget *flow = create_video_flow_box(hp);
-    gtk_box_pack_start(GTK_BOX(vbox), flow, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), flow, FALSE, FALSE, 0);
 
     gtk_container_add(GTK_CONTAINER(scroll), vbox);
     return scroll;
@@ -204,20 +239,19 @@ void home_presenter_init(HomePresenter *hp, VideoLibrary *lib) {
     hp->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(hp->window), "ViewPort");
     gtk_window_set_default_size(GTK_WINDOW(hp->window), 960, 600);
-    g_signal_connect(hp->window, "destroy",
-                     G_CALLBACK(gtk_main_quit), NULL);
+    gtk_window_set_position(GTK_WINDOW(hp->window), GTK_WIN_POS_CENTER);
+    g_signal_connect(hp->window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     hp->stack = gtk_stack_new();
     gtk_stack_set_transition_type(GTK_STACK(hp->stack),
-        GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
+                                  GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
     gtk_stack_set_transition_duration(GTK_STACK(hp->stack), 300);
 
     hp->home_page = build_home_page(hp);
     gtk_stack_add_named(GTK_STACK(hp->stack), hp->home_page, "home");
 
     vp_init(&hp->vp);
-    gtk_stack_add_named(GTK_STACK(hp->stack),
-                        hp->vp.container, "player");
+    gtk_stack_add_named(GTK_STACK(hp->stack), hp->vp.container, "player");
 
     gtk_container_add(GTK_CONTAINER(hp->window), hp->stack);
     gtk_widget_show_all(hp->window);
