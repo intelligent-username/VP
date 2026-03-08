@@ -76,8 +76,17 @@ static void compute_cover_scale(int src_w, int src_h,
 }
 
 static uint8_t *scale_frame_to_rgb(AVFrame *src, int dst_w, int dst_h, int *out_stride) {
+    enum AVPixelFormat src_fmt = src->format;
+    switch (src_fmt) {
+        case AV_PIX_FMT_YUVJ420P: src_fmt = AV_PIX_FMT_YUV420P; break;
+        case AV_PIX_FMT_YUVJ422P: src_fmt = AV_PIX_FMT_YUV422P; break;
+        case AV_PIX_FMT_YUVJ444P: src_fmt = AV_PIX_FMT_YUV444P; break;
+        case AV_PIX_FMT_YUVJ440P: src_fmt = AV_PIX_FMT_YUV440P; break;
+        default: break;
+    }
+
     struct SwsContext *sws = sws_getContext(
-        src->width, src->height, src->format,
+        src->width, src->height, src_fmt,
         dst_w, dst_h, AV_PIX_FMT_RGB24,
         SWS_BILINEAR, NULL, NULL, NULL);
     if (!sws) return NULL;

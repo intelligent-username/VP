@@ -35,8 +35,16 @@ int video_decoder_init(AppContext *ctx) {
 /* ---- conversion helper ---- */
 
 static struct SwsContext *create_sws(AVFrame *frame) {
+    enum AVPixelFormat src_fmt = frame->format;
+    switch (src_fmt) {
+        case AV_PIX_FMT_YUVJ420P: src_fmt = AV_PIX_FMT_YUV420P; break;
+        case AV_PIX_FMT_YUVJ422P: src_fmt = AV_PIX_FMT_YUV422P; break;
+        case AV_PIX_FMT_YUVJ444P: src_fmt = AV_PIX_FMT_YUV444P; break;
+        case AV_PIX_FMT_YUVJ440P: src_fmt = AV_PIX_FMT_YUV440P; break;
+        default: break;
+    }
     return sws_getContext(
-        frame->width, frame->height, frame->format,
+        frame->width, frame->height, src_fmt,
         frame->width, frame->height, AV_PIX_FMT_BGRA,
         SWS_BILINEAR, NULL, NULL, NULL);
 }

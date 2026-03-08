@@ -25,8 +25,12 @@
 #define RENDER_INTERVAL_MS 16
 
 
+#define AUDIO_LATENCY_SEC 0.150
+
 static double get_audio_time(Player *p) {
-    return audio_gateway_get_position(&p->ctx->audio_gw);
+    /* Subtract hardware buffering latency to find actual speaker time */
+    double t = audio_gateway_get_position(&p->ctx->audio_gw);
+    return t > AUDIO_LATENCY_SEC ? t - AUDIO_LATENCY_SEC : 0.0;
 }
 
 static int has_audio(Player *p) {
@@ -100,6 +104,7 @@ static gboolean on_render_tick(gpointer data) {
     Player *p = (Player *)data;
 
     if (p->ctx->playback.quit || is_playback_over(p)) {
+        p->timer_id = 0; /* Prevent player_stop from calling g_source_remove */
         player_stop(p);
         return G_SOURCE_REMOVE;
     }

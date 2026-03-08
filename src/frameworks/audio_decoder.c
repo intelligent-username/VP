@@ -88,25 +88,51 @@ static void seed_clock_if_needed(AppContext *ctx, AVFrame *frame) {
 }
 
 static void resample_and_enqueue(AppContext *ctx, AVFrame *frame) {
+    if (frame->nb_samples <= 0) return;
+
     uint8_t *out = NULL;
     int out_samples = (int)av_rescale_rnd(
         swr_get_delay(ctx->swr, ctx->audio_ctx->sample_rate)
             + frame->nb_samples,
         ctx->audio_ctx->sample_rate, ctx->audio_ctx->sample_rate,
         AV_ROUND_UP);
-    av_samples_alloc(&out, NULL, ctx->audio_ch_layout.nb_channels,
-                     out_samples, AV_SAMPLE_FMT_S16, 0);
+
+    if (out_samples <= 0) return;
+
+    if (av_samples_alloc(&out, NULL, ctx->audio_ch_layout.nb_channels,
+                         out_samples, AV_SAMPLE_FMT_S16, 0) < 0) {
+        return; /* Allocation failed (corrupt huge packet?), drop cleanly */
+    }
 
     int converted = swr_convert(ctx->swr, &out, out_samples,
         (const uint8_t **)frame->data, frame->nb_samples);
 
     if (converted > 0) {
+        /* "Normalize" deep-fried audio using a simple peak limiter / AGC */
+        int16_t *samples = (int16_t *)out;
+        int total_samples = converted * ctx->audio_ch_layout.nb_channels;
+        int32_t peak = 0;
+        
+        for (int i = 0; i < total_samples; i++) {
+            int32_t val = samples[i];
+            if (val < 0) val = -val;
+            if (val > peak) peak = val;
+        }
+
+        /* If volume exceeds dynamic headroom (e.g. 24000), crush it down smoothly */
+        if (peak > 24000) {
+            double scale = 24000.0 / (double)peak;
+            for (int i = 0; i < total_samples; i++) {
+                samples[i] = (int16_t)(samples[i] * scale);
+            }
+        }
+
         wait_if_fifo_full(ctx);
         SDL_LockMutex(ctx->audio_mutex);
         av_audio_fifo_write(ctx->audio_fifo, (void **)&out, converted);
         SDL_UnlockMutex(ctx->audio_mutex);
     }
-    av_freep(&out);
+    if (out) av_freep(&out);
 }
 
 /* ---- decode thread ---- */
@@ -120,7 +146,8 @@ static int audio_decode_thread_fn(void *arg) {
         if (ctx->playback.paused) { SDL_Delay(20); continue; }
 
         int ret = ipc_recv_packet_timeout(ctx->audio_sk_recv, pkt, 50);
-        if (ret <= 0) continue;
+        if (ret < 0) break;    /* EOF / error */
+        if (ret == 0) continue; /* timeout */
 
         if (avcodec_send_packet(ctx->audio_ctx, pkt) == 0) {
             while (avcodec_receive_frame(ctx->audio_ctx, frame) == 0) {

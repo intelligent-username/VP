@@ -2,7 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{graphicx}
-\geometry{margin=1in}
+\geometry{margin=0.7in}
 
 \title{CSC209 A3}
 \author{Varak Tanashian \and Ethan Brook}
@@ -14,24 +14,42 @@
 \newpage
 
 \chapter{Project Overview}
-% 5.1 Project Overview
-This is just the template for now. It will be filled in with real details once the project is done.
+
+% 1: Project Overview
+
+This is just the template for now. More details once the project is done.
 
 \chapter{Build Instructions}
-% 5.2 Build Instructions
-List exact commands to compile and run your project. Include any required input files or dependencies.
+
+% 2: Build Instructions
+
+\textbf{Dependencies Required:}
+\begin{itemize}
+    \item \texttt{libavcodec-dev}, \texttt{libavformat-dev}, \texttt{libavutil-dev}, \texttt{libswscale-dev}, \texttt{libswresample-dev} (FFmpeg)
+    \item \texttt{libsdl2-dev} (SDL2)
+    \item \texttt{libgtk-3-dev} (GTK+3)
+\end{itemize}
+
+\textbf{To build:} 
+Run \texttt{make} in the root directory.
+
+\textbf{To run:}
+Run \texttt{./vp}.
 
 \chapter{Architecture Diagram}
-% 5.3 Architecture Diagram
-Include a diagram showing all processes (or server/clients) and their connections. TEMPORARY PLACEHOLDER:
+
+% 3: Architecture Diagram
+
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.8\textwidth]{imgs/architecture-diagram}
+\includegraphics[width=0.8\textwidth]{imgs/architecture-diagram.png}
 \caption{Overall project architecture.}
 \end{figure}
 
 \chapter{Communication Protocol}
-% 5.4 Communication Protocol
+
+% 4: Communication Protocol
+
 For each message type, describe:
 \begin{itemize}
     \item Sender and receiver
@@ -41,8 +59,10 @@ For each message type, describe:
 \end{itemize}
 
 \chapter{Concurrency Model}
-% 5.5 Concurrency Model
-Explain how your application handles concurrency:
+
+% 5: Concurrency Model
+
+"Explain how your application handles concurrency:"
 \begin{itemize}
     \item Forking and process coordination (Category 1)
     \item Select loops and fd sets (Category 2)
@@ -50,7 +70,9 @@ Explain how your application handles concurrency:
 \end{itemize}
 
 \chapter{Error Handling and Robustness}
-% 5.6 Error Handling and Robustness
+
+% 6: Error Handling and Robustness
+
 Describe at least three runtime error scenarios and how your code handles each. Example:
 \begin{itemize}
     \item Client disconnects mid-message
@@ -59,7 +81,7 @@ Describe at least three runtime error scenarios and how your code handles each. 
 \end{itemize}
 
 \chapter{Team Contributions}
-% 5.7 Team Contributions
+% 7: Team Contributions
 Briefly list each team member and their specific contributions.
 
 \end{document}

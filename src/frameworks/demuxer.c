@@ -26,8 +26,8 @@ static int dispatch_packet(AppContext *ctx, AVPacket *pkt) {
 }
 
 static void close_send_sockets(AppContext *ctx) {
-    close(ctx->video_sk_send);
-    close(ctx->audio_sk_send);
+    if (ctx->video_sk_send >= 0) close(ctx->video_sk_send);
+    if (ctx->audio_sk_send >= 0) close(ctx->audio_sk_send);
     ctx->video_sk_send = -1;
     ctx->audio_sk_send = -1;
 }

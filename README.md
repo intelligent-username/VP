@@ -38,8 +38,10 @@ brew install ffmpeg sdl2 pkg-config
 
 ## Buidling
 
-Simple run `make` to build the project.
+Run `make` to build the project.
 Run `make run` to build and immediately run the project.
 Run `make clean` to clean the project.
 
 After you finish the `make` command, it will generate a file called `vp`.
+
+Run `./vp` to start up the project.

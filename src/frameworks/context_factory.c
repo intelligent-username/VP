@@ -74,6 +74,5 @@ void context_teardown(AppContext *ctx) {
     audio_decoder_cleanup(ctx);
     fq_destroy(&ctx->frame_queue);
     if (ctx->format_ctx) avformat_close_input(&ctx->format_ctx);
-    SDL_Quit();
     free(ctx);
 }
