@@ -1,12 +1,17 @@
-/*
-    Renders BGRA frames on a GtkDrawingArea via Cairo.
- */
-
- #include "video_presenter.h"
+/* Renders BGRA frames on a GtkDrawingArea via Cairo. */
+#include "video_presenter.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* ---- Cairo draw callback ---- */
+static void on_minimize_requested(void *data) {
+    VideoPresenter *vp = (VideoPresenter *)data;
+    vp_set_minimized_mode(vp);
+}
+
+static void on_fullscreen_requested(void *data) {
+    VideoPresenter *vp = (VideoPresenter *)data;
+    vp_set_fullscreen_mode(vp);
+}
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     VideoPresenter *vp = (VideoPresenter *)data;
@@ -39,10 +44,11 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     return TRUE;
 }
 
-/* ---- Public API ---- */
-
 void vp_init(VideoPresenter *vp) {
     memset(vp, 0, sizeof(*vp));
+
+    /* Initialize playback mode state */
+    playback_mode_init(&vp->mode_state);
 
     vp->container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
@@ -72,6 +78,16 @@ void vp_init(VideoPresenter *vp) {
 
     gtk_box_pack_start(GTK_BOX(vp->container),
                        vp->progress_bar, FALSE, FALSE, 0);
+
+    /* Initialize view manager */
+    playback_view_manager_init(&vp->view_manager, vp->container);
+
+    /* Initialize input handler */
+    playback_input_handler_init(&vp->input_handler, 
+                                on_minimize_requested, 
+                                vp,
+                                on_fullscreen_requested,
+                                vp);
 }
 
 void vp_set_frame(VideoPresenter *vp, const RGBFrame *f) {
@@ -94,7 +110,52 @@ void vp_set_progress(VideoPresenter *vp, double pct) {
         GTK_PROGRESS_BAR(vp->progress_bar), pct);
 }
 
+void vp_set_fullscreen_mode(VideoPresenter *vp) {
+    playback_mode_switch(&vp->mode_state, PLAYBACK_MODE_FULLSCREEN);
+    playback_view_manager_show_fullscreen(&vp->view_manager, NULL);
+}
+
+void vp_set_minimized_mode(VideoPresenter *vp) {
+    playback_mode_switch(&vp->mode_state, PLAYBACK_MODE_MINIMIZED);
+    playback_view_manager_show_minimized(&vp->view_manager, NULL);
+}
+
+void vp_hide_miniplayer(VideoPresenter *vp) {
+    playback_view_manager_hide_minimized(&vp->view_manager);
+}
+
+void vp_on_video_finished(VideoPresenter *vp) {
+    playback_mode_on_video_finished(&vp->mode_state);
+    playback_view_manager_hide_minimized(&vp->view_manager);
+}
+
+void vp_set_expand_callback(VideoPresenter *vp,
+                            playback_action_callback callback,
+                            void *userdata) {
+    playback_view_manager_set_expand_callback(&vp->view_manager, callback, userdata);
+}
+
+void vp_set_close_callback(VideoPresenter *vp,
+                           playback_action_callback callback,
+                           void *userdata) {
+    playback_view_manager_set_close_callback(&vp->view_manager, callback, userdata);
+}
+
+void vp_connect_input_with_callback(VideoPresenter *vp, GtkWidget *window,
+                                    playback_action_callback on_minimize,
+                                    void *minimize_userdata,
+                                    playback_action_callback on_fullscreen,
+                                    void *fullscreen_userdata) {
+    playback_input_handler_init(&vp->input_handler,
+                                on_minimize,
+                                minimize_userdata,
+                                on_fullscreen,
+                                fullscreen_userdata);
+    playback_input_handler_connect(&vp->input_handler, window);
+}
+
 void vp_cleanup(VideoPresenter *vp) {
     free(vp->current_data);
     vp->current_data = NULL;
+    playback_view_manager_cleanup(&vp->view_manager);
 }

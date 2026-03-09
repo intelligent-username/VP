@@ -18,7 +18,8 @@
 # Scraps
 .build_count
 
-
 # Output
 vp
 *.o
+*.gch
+build/

@@ -21,14 +21,14 @@ typedef struct {
 } AudioGateway;
 
 /*
- * SDL audio callback: reads PCM from the FIFO,
- * advances the audio clock by the number of samples consumed.
+    SDL audio callback: reads PCM from the FIFO,
+    advances the audio clock by the number of samples consumed.
  */
 void audio_gateway_callback(void *userdata, Uint8 *stream, int len);
 
 /*
- * Return the current "played" audio position in seconds.
- * Thread-safe (locks the mutex).
+    Return the current "played" audio position in seconds.
+    Thread-safe (locks the mutex).
  */
 double audio_gateway_get_position(AudioGateway *gw);
 

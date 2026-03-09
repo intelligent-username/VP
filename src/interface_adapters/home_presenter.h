@@ -10,17 +10,21 @@
 #include <gtk/gtk.h>
 #include "video_entry.h"
 #include "video_presenter.h"
+#include "search_interactor.h"
 
 typedef struct {
     GtkWidget      *window;
     GtkWidget      *stack;
     GtkWidget      *home_page;
+    GtkWidget      *home_page_overlay;  /* overlay for minimized player */
 
     GtkWidget *search_entry;     /* search bar at top       */
     GtkWidget *flow_box;         /* reference to thumbnails */
 
-    VideoPresenter  vp;         /* player page lives here   */
+    VideoPresenter  vp;         /* player management       */
     VideoLibrary   *library;    /* borrowed                 */
+
+    SearchInteractor search_interactor; /* search logic */
 
     char            selected_path[VE_PATH_MAX];
     int             has_selection;
