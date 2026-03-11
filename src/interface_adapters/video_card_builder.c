@@ -56,6 +56,8 @@ GtkWidget *video_card_builder_create(int video_index,
 
     gtk_container_add(GTK_CONTAINER(ebox), vbox);
 
+    g_object_set_data(G_OBJECT(ebox), "video-index", GINT_TO_POINTER(video_index));
+    
     CardContext *ctx = g_new(CardContext, 1);
     ctx->video_index = video_index;
     ctx->callback = on_select;
